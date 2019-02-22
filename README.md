@@ -1,4 +1,4 @@
-This starter kit was used during the 2018 AEC hackathon - SF Bay Area. If you would like to join the Matterport developer program please visit https://matterport.com/developers/ to sign up for sdk access.
+This starter kit is being used for the 2019 AEC hackathon - SF Bay Area. If you would like to join the Matterport developer program please visit https://matterport.com/developers/ to sign up for sdk access.
 
 # sdk-starter-kit
 
