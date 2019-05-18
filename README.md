@@ -1,3 +1,32 @@
+This branch is a very basic simplified app to show issues will occur with multiple showcases setup.
+
+Follow README guide in original starter-kit (see below) to setup the environment and load the dev-server (sudo npm run debug). Don't forget to put in your api key in config.json, then visit 127.0.0.1:800 to start the app. (My api key is blocked on port 80, so I make dev-server to run on port 800.)
+
+#### Please allow window popup from localhost/127.0.0.1 to let the app run correctly. This app is meant to be run in Google Chrome, other browsers may be OK but have not been tested.
+
+Please note that, interactions with showcases are supposed to be done via clicking buttons on central window.
+All buttons on page are pretty self-explained, so I'll just skip explaining them one by one. Codes are commented in detail, check them out if interested.
+
+### Tests worth doing
+
+#### 1. Toggle mode
+Every camera transition updates current pose that are stored in global variables. Reading those variables in a .then() chained after movement Promise shall get the "ending pose" for each camera movement.
+Notice how ending mode is often 'mode.transitioning', if not everytime, particularly when toglling to mode of DOLLHOUSE or FLOORPLAN. 
+A shortly delayed Camera.getPose() (e.g. a Camera.getPose() in a second .then()) ussually (but not always) get correct mode info.
+As the result, trying to move camera in a .then() chained right after a Mode.moveTo() often fails due to "another transition is active", or sometime it will succeed (as there will be a short delay in between), unpredictable and undetectable. 
+
+#### 2. Reloading showcases (via "Reload Showcases" button of course)
+Move to some pose other than the default start location, then click "Reload Showcases".
+As in my observation, I'll suggest to load some model with a start location in mode of INSIDE or OUTSIDE, then move to some pose in mode of DOLLHOUSE or FLOORPLAN, and then try "Reload Showcases". For most of the times, this will fail. While reloading from mode of INSIDE/OUTSIDE seems to work for most of the times, but not all the time neither. Checking error log in showcases' browser window console will be necessary to understand what is happening.
+This seems to be related to test #1 (above), but it's actually not the same. The above one happens AFTER a movement is completed, while this one happens BEFORE a movement is started.
+
+#### 3. Early interact
+When SDK indicates showcase is ready for user input (entering appphase.playing), the showcase itself is still displaying logos. Move/Rotate/Mode do NOT always work before logos fade out. Even when it works, it'll be a camera pop intead of a smooth transition. There are even weird situations that showcase will only follow portion of the order, e.g. rotate roughly half of what was asked. As in my observation, it will only be safe to move camera 1-2 seconds LATER AFTER logos fade out. However, there seems no way through API to do this be cause codes can not "see" if logos fade out yet and the "1-2 seconds" is not certain.
+
+
+# Original Starter-Kit README guide
+
+
 This starter kit is being used for the 2019 AEC hackathon - SF Bay Area. If you would like to join the Matterport developer program please visit https://matterport.com/developers/ to sign up for sdk access.
 
 # sdk-starter-kit
