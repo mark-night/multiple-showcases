@@ -11,9 +11,10 @@ All buttons on page are pretty self-explained, so I'll just skip explaining them
 
 #### 1. Toggle mode
 Every camera transition updates current pose that are stored in global variables. Reading those variables in a .then() chained after movement Promise shall get the "ending pose" for each camera movement.
-Notice how ending mode is often 'mode.transitioning', if not everytime, particularly when toglling to mode of DOLLHOUSE or FLOORPLAN. 
-A shortly delayed Camera.getPose() (e.g. a Camera.getPose() in a second .then()) ussually (but not always) get correct mode info.
-As the result, trying to move camera in a .then() chained right after a Mode.moveTo() often fails due to "another transition is active", or sometime it will succeed (as there will be a short delay in between), unpredictable and undetectable. 
+Notice how the "ending mode" is often 'mode.transitioning', if not every time.
+A shortly delayed Camera.getPose() (e.g. a Camera.getPose() in a second .then()) usually (but not always) get correct mode info.
+As the result, trying to move camera in a .then() chained right after a Mode.moveTo() often fails due to "another transition is active", or sometime it will succeed (as there will be a short delay in between), unpredictable and undetectable.
+If this happened, all movement/rotation/mode calls since after will be unpredictable, sometime works, sometime doesn't.
 
 #### 2. Reloading showcases (via "Reload Showcases" button of course)
 Move to some pose other than the default start location, then click "Reload Showcases".
@@ -21,7 +22,7 @@ As in my observation, I'll suggest to load some model with a start location in m
 This seems to be related to test #1 (above), but it's actually not the same. The above one happens AFTER a movement is completed, while this one happens BEFORE a movement is started.
 
 #### 3. Early interact
-When SDK indicates showcase is ready for user input (entering appphase.playing), the showcase itself is still displaying logos. Move/Rotate/Mode do NOT always work before logos fade out. Even when it works, it'll be a camera pop intead of a smooth transition. There are even weird situations that showcase will only follow portion of the order, e.g. rotate roughly half of what was asked. As in my observation, it will only be safe to move camera 1-2 seconds LATER AFTER logos fade out. However, there seems no way through API to do this be cause codes can not "see" if logos fade out yet and the "1-2 seconds" is not certain.
+When SDK indicates showcase is ready for user input (entering appphase.playing), the showcase itself is still displaying logos. Move/Rotate/Mode do NOT always work before logos fade out. Even when it works, it'll be a camera pop instead of a smooth transition. There are even weird situations that showcase will only follow portion of the order, e.g. rotate roughly half of what was asked, or rotated but not moved. As in my observation, it will only be safe to move camera 1-2 seconds (an uncertain period) LATER AFTER logos fade out. However, there seems no way through API to do this because codes can not "see" if logos fade out and there will be a necessary uncertain period to wait before taking an action.
 
 
 # Original Starter-Kit README guide
@@ -109,7 +110,7 @@ window.SHOWCASE_SDK.connect(showcaseFrame, Config.ApiKey, '3.0')
 #### 5. Customize the viewer
 You can customize the viewer by setting url parameters on the iframe src,
 
-For example, 
+For example,
 ```javascript
 const showcaseFrame = document.getElementById('showcase');
 showcaseFrame.src = 'https://my.matterport.com/showcase-beta?m=' + Config.Sid + '&play=1&brand=0&qs=1';

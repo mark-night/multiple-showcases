@@ -95,7 +95,8 @@ function move(target){
         case 'mode.inside':
         case 'mode.outside':
           log(`CMD: Camera.moveInDirection('${target.toUpperCase()}')`);
-          return _sdk.Camera.moveInDirection(target.toUpperCase()).then(orderDone);
+          return _sdk.Camera.moveInDirection(target.toUpperCase())
+          .then(orderDone); // inside this .then() meaning preceding movement is completed
         break;
         case 'mode.dollhouse':
         case 'mode.floorplan':
@@ -118,19 +119,19 @@ function rotate(target){
           };
   log(`CMD: Camera.rotate(${r[target][0]}, ${r[target][1]})`);
   _sdk.Camera.rotate(r[target][0], r[target][1])
+    .then(orderDone) // inside this .then() meaning preceding movement is completed
     .catch((e)=>{
       err(e);
     })
-    .then(orderDone);
 }
 
 function mode(target){
   log(`CMD: Mode.moveTo('${target}')`);
   _sdk.Mode.moveTo(target)
+    .then(orderDone) // inside this .then() meaning preceding movement is completed
     .catch((e)=>{
       err(e);
     })
-    .then(orderDone);
 }
 
 function pose(){
@@ -153,46 +154,56 @@ function pose(){
 }
 
 function orderDone(reportMode = true){
-  if (reportMode){
-    if (_MODE === 'mode.transitioning'){
-      err(`Ending mode: ${_MODE}`);
-      wait(new Date().getTime(), 3000).then(()=>{
+  return new Promise((resolve)=>{
+    if (reportMode){
+      if (_MODE === 'mode.transitioning'){
+        err(`Ending mode: ${_MODE}`);
+        return wait(new Date().getTime(), 3000)
+          .then(()=>{
+            _views[window.name].idle = true;
+            return resolve();
+          });
+      }
+      else{
+        log(`Ending mode: ${_MODE}`);
         _views[window.name].idle = true;
-      });
+        return resolve();
+      }
     }
     else{
-      log(`Ending mode: ${_MODE}`);
       _views[window.name].idle = true;
+      return resolve();
     }
-  }
-  else{
-    _views[window.name].idle = true;
-  }
+  });
 }
+
 var count = 0;
 function wait(start, duration){
-  let waitTime = new Date().getTime() - start;
-  if (waitTime < duration){
-    return _sdk.Camera.getPose()
-      .then((newPose)=>{
-        count++;
-        waitTime = new Date().getTime() - start;
-        _central._pose[window.name] = newPose;
-        _MODE = newPose.mode;
-        _SWEEP = _MODE.indexOf('side') > 0 ? poseGet.sweep : '';
-        if (_MODE !== 'mode.transitioning'){
-          log(`Mode changed to ${_MODE} after ${(waitTime/1000).toFixed(3)} secs, with ${count} times of Camera.getPose() fetching.`);
-          count = 0;
-        }
-        else{
-          return wait(start, duration);
-        }
-      });
-  }
-  else{
-    waitTime = new Date().getTime() - start;
-    err(`Mode is still ${_MODE} after ${(waitTime/1000).toFixed(3)} secs, with ${count} times of Camera.getPose() fetching.`);
-  }
+  return new Promise((resolve)=>{
+    let waitTime = new Date().getTime() - start;
+    if (waitTime < duration){
+      return _sdk.Camera.getPose()
+        .then((newPose)=>{
+          count++;
+          _central._pose[window.name] = newPose;
+          _MODE = newPose.mode;
+          _SWEEP = _MODE.indexOf('side') > 0 ? newPose.sweep : '';
+          if (_MODE !== 'mode.transitioning'){
+            log(`Mode changed to ${_MODE} after ${(waitTime/1000).toFixed(3)} secs, with ${count} times of Camera.getPose() fetching.`);
+            count = 0;
+            return resolve();
+          }
+          else{
+            return wait(start, duration);
+          }
+        });
+    }
+    else{
+      count = 0;
+      err(`Mode is still ${_MODE} after ${(waitTime/1000).toFixed(3)} secs, with ${count} times of Camera.getPose() fetching.`);
+      return resolve();
+    }
+  });
 }
 
 function log(message){
@@ -209,7 +220,7 @@ function err(error){
   console.error(error);
   let e = typeof(error) === 'object' ? error.stack : error;
   if (e.length > 0){
-    e = `<span style="color:orangered">${e}</span>`;
+    e = `<span style="color:white;background-color:orangered;">${e}</span>`;
     log(e);
   }
 }
