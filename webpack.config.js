@@ -1,13 +1,22 @@
 const path = require('path');
 
 module.exports = {
-  entry: './src/index.js',
+  entry: {
+    central: './src/app-central.js',
+    showcase: './src/app-showcase.js'
+  },
   output: {
     path: path.resolve(__dirname, '.'),
-    filename: 'bundle.js'
+    filename: 'bundle-[name].js'
   },
   devtool: 'inline-source-map',
   devServer: {
-    port: 80
+    contentBase: path.resolve(__dirname, '.'),
+    watchContentBase: true,
+    port: 800,
+    overlay: {
+      warnings: true,
+      errors: true
+    }
   }
 };
